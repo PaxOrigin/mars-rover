@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en" data-bs-theme="dark">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Mars Rover Game</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous">
+    <link rel="stylesheet" href="stylesheet.css">
+
+</head>
+
+<body>
+    <div class="text-center">
+        <h1 class="display-1">Mars Rover</h1>
+    </div>
+    <div class="container-lg" id="input-container">
+        <div class="input-group mb-3" id="input-container-row">
+            <input id="grid-width" type="number" class="form-control" placeholder="3" value="3" aria-label="width">
+            <input id="grid-height" type="number" class="form-control" placeholder="3" value="3" aria-label="Height">
+            <button id="start-button" type="button" class="btn btn-outline-primary" aria-label="Start">Start</button>
+        </div>
+    </div>
+    <div class="container text-center" id="grid-container">
+
+    </div>
+
+    <div id="gameover" class="text-center justify-content-center center-block" hidden="true">
+        <h1 class="display-2 text-center">GAME OVER!</h1>
+        <h1 id="score" class="display-3 text-center"></h1>
+    </div>
+
+    <script>
+        //  src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js" integrity = "sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe" crossorigin = "anonymous"
+
+        class playerClass {
+            x = 0;
+            y = 0;
+            energy = 50;
+            radioactivity = 0;
+            score = 0;
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+            }
+
+            setPosition(x, y) {
+                this.x = x;
+                this.y = y;
+            }
+        }
+
+        class objectSpawnRates {
+            energy = 10;
+            mountain = 30;
+            radioactive = 35;
+            sample = 45;
+        }
+
+        class objectStrings {
+            sample = '\u{1F9EA}';
+            shield = '\u{1F48A}'
+            rover = '\u{1F916}';
+            mountain = '\u26F0';
+            volcano = '\u{1F30B}';
+            energy = '\u{26A1}';
+            radioactive = '\u{2622}';
+            mountain2 = '\u{1F5FB}';
+            player = '\u{1F916}'
+        }
+
+        const gameoverShow = document.getElementById("gameover");
+        const scoreShow = gameoverShow.querySelector("#score");
+        const inputFieldContainer = document.getElementById("input-container");
+        const inputFieldRowContainer = inputFieldContainer.querySelector("#input-container-row");
+        const startButton = inputFieldRowContainer.querySelector("#start-button");
+        const numberOfColumns = inputFieldRowContainer.querySelector("#grid-width");
+        const numberOfRows = inputFieldRowContainer.querySelector("#grid-height");
+        const grid = document.querySelector("#grid-container");
+
+        let gridMatrix = [];
+        let gamestatus = false;
+        let gridRowContainer = [];
+        const objects = new objectStrings();
+        const objectSpawnRate = new objectSpawnRates();
+        const player = new playerClass(0, 0);
+
+
+        const setInitialPosition = () => {
+            let x = Number(Math.round(Math.random() * (numberOfColumns.value - 1)));
+            let y = Number(Math.round(Math.random() * (numberOfRows.value - 1)));
+            player.setPosition(x, y);
+            console.log(`x: ${player.x}   y: ${player.y}`);
+            console.log(x + " " + y);
+            console.log(numberOfColumns.value);
+            console.log(numberOfRows.value);
+        }
+
+        const ShowGameOver = () => {
+            resetStatus();
+            scoreShow.textContent = "Score: " + player.score;
+            gamestatus = false;
+            gameoverShow.hidden = false;
+            player.score = 0;
+            player.energy = 50;
+            player.radioactivity = 0;
+        }
+
+        const setTerrain = () => {
+            let terrain = Math.round(Math.random() * 100)
+            let value = 0;
+            if (terrain >= 0 && terrain <= objectSpawnRate.energy) {
+                value = 2;
+            }
+            else if (terrain > objectSpawnRate.energy && terrain <= objectSpawnRate.mountain) {
+                value = 3;
+            }
+            else if (terrain > objectSpawnRate.mountain && terrain <= objectSpawnRate.radioactive) {
+                value = 4;
+            }
+            else if (terrain > objectSpawnRate.radioactive && terrain <= objectSpawnRate.sample) {
+                value = 5;
+            }
+            return value;
+        }
+
+        const fillGridMatrix = () => {
+            for (let row = 0; row < numberOfRows.value; row++) {
+                gridMatrix[row] = []
+                for (let column = 0; column < numberOfColumns.value; column++) {
+
+                    gridMatrix[row][column] = setTerrain();
+                }
+            }
+            gridMatrix[player.y][player.x] = 1;
+            console.log(gridMatrix);
+        }
+
+        const resetStatus = () => {
+            grid.innerHTML = "";
+
+        }
+
+        const fillGridContainer = () => {
+            console.log("Welcome to the program");
+
+            gamestatus = true;
+            gameoverShow.hidden = true;
+            setInitialPosition();
+            fillGridMatrix();
+            printGridDom();
+
+        };
+
+        const printGridDom = () => {
+            resetStatus();
+            for (let row = 0; row < numberOfRows.value; row++) {
+                let rowElement = document.createElement("div");
+                rowElement.classList.add("my-row");
+                rowElement.classList.add("row");
+                gridRowContainer[row] = []
+                for (let column = 0; column < numberOfColumns.value; column++) {
+                    gridRowContainer[row][column] = document.createElement("div");
+                    gridRowContainer[row][column].classList.add("col");
+                    gridRowContainer[row][column].classList.add("justify-content-center");
+                    gridRowContainer[row][column].classList.add("d-flex");
+                    gridRowContainer[row][column].classList.add("center-block");
+                    gridRowContainer[row][column].classList.add("text-center");
+
+
+
+                    let squareConter = document.createElement("div");
+                    squareConter.classList.add("square");
+                    squareConter.classList.add("text-center");
+                    squareConter.classList.add("center-block");
+                    squareConter.classList.add("d-flex");
+                    squareConter.classList.add("justify-content-center");
+                    squareConter.textContent = fillGridSpaceWithElement(row, column);
+                    gridRowContainer[row][column].appendChild(squareConter);
+                    rowElement.appendChild(gridRowContainer[row][column]);
+                }
+                grid.appendChild(rowElement);
+            }
+        }
+
+        const fillGridSpaceWithElement = (row, column) => {
+            if (gridMatrix[row][column] === 0) {
+                return "-";
+            }
+            else if (gridMatrix[row][column] === 1) {
+                return objects.player;
+            }
+            else if (gridMatrix[row][column] === 2) {
+                return objects.energy;
+            }
+            else if (gridMatrix[row][column] === 3) {
+                return objects.mountain;
+            }
+            else if (gridMatrix[row][column] === 4) {
+                return objects.radioactive;
+            }
+            else if (gridMatrix[row][column] === 5) {
+                return objects.sample;
+            }
+
+        }
+
+        const checkCollision = () => {
+            if (gridMatrix[player.y][player.x] === 3) {
+                return true;
+            }
+            if (gridMatrix[player.y][player.x] === 5) {
+                player.score += 25;
+            }
+            if (gridMatrix[player.y][player.x] === 2) {
+                player.energy += 15;
+            }
+            player.energy -= 5;
+            player.score += 10;
+            return false;
+        }
+
+        const movementHandler = (key) => {
+            if (gamestatus) {
+                let changed = true;
+                let tempx = player.x;
+                let tempy = player.y;
+                switch (key) {
+                    case "ArrowDown":
+                        if (player.y + 1 > numberOfRows.value - 1) {
+                            player.y = 0;
+                        }
+                        else {
+                            player.y++;
+                        }
+                        break;
+                    case "ArrowUp":
+                        if (player.y - 1 < 0) {
+                            player.y = numberOfRows.value - 1;
+                        }
+                        else {
+                            player.y--;
+                        }
+                        break;
+                    case "ArrowRight":
+                        if (player.x + 1 > numberOfColumns.value - 1) {
+                            player.x = 0;
+                        }
+                        else {
+                            player.x++;
+                        }
+                        break;
+                    case "ArrowLeft":
+                        if (player.x - 1 < 0) {
+                            player.x = numberOfRows.value - 1;
+                        }
+                        else {
+                            player.x--;
+                        }
+                        break;
+
+                    default:
+                        changed = false;
+                        break;
+                }
+                console.log(`x: ${player.x}    y: ${player.y}`);
+                if (checkCollision()) {
+                    player.x = tempx;
+                    player.y = tempy;
+                }
+
+                if (player.energy === 0) {
+                    ShowGameOver();
+                    return;
+                }
+                if (changed) {
+                    console.log("Update");
+                    gridMatrix[tempy][tempx] = 0;
+                    gridMatrix[player.y][player.x] = 1;
+                    printGridDom();
+                }
+            }
+
+        }
+
+        startButton.addEventListener("click", fillGridContainer);
+        document.addEventListener("keydown", (event) => movementHandler(event.key));
+
+    </script>
+
+</body>
+
+</html>
